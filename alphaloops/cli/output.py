@@ -2,10 +2,28 @@
 
 import json
 
+import click
 from rich.console import Console
 from rich.table import Table
 
 console = Console()
+
+
+class DefaultGroup(click.Group):
+    """A Click group that forwards unknown subcommands to a default command.
+
+    If the first arg isn't a known subcommand, it's treated as an argument
+    to the default command (e.g. `loopsh crashes 80806` → `loopsh crashes list 80806`).
+    """
+
+    def __init__(self, *args, default_cmd=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.default_cmd = default_cmd
+
+    def parse_args(self, ctx, args):
+        if args and self.default_cmd and args[0] not in self.commands and not args[0].startswith("-"):
+            args = [self.default_cmd] + args
+        return super().parse_args(ctx, args)
 
 
 def print_json(data):

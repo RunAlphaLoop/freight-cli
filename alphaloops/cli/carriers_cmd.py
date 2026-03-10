@@ -2,13 +2,30 @@
 
 import click
 
+from .codegen import print_python, print_typescript
 from .state import pass_state
-from .output import print_json, print_kv, print_list_table
+from .output import DefaultGroup, print_json, print_kv, print_list_table
 
 
-@click.group()
+@click.group(cls=DefaultGroup, default_cmd="get")
 def carriers():
-    """Carrier profiles, search, authority history, and news."""
+    """Carrier profiles, search, authority history, and news.
+
+    \b
+    Shortcut: loopsh carriers <DOT_NUMBER>
+    equals:   loopsh carriers get <DOT_NUMBER>
+
+    \b
+    Examples:
+      loopsh carriers get 2247505
+      loopsh carriers 2247505                          # same thing
+      loopsh carriers get 2247505 --fields legal_name,total_trucks
+      loopsh carriers mc 624748
+      loopsh carriers search "Werner Enterprises"
+      loopsh carriers search "JB Hunt" --state AR
+      loopsh carriers authority 2247505
+      loopsh carriers news 2247505 --start-date 2025-01-01
+    """
     pass
 
 
@@ -17,8 +34,23 @@ def carriers():
 @click.option("--fields", default=None, help="Comma-separated field projection.")
 @pass_state
 def get(state, dot_number, fields):
-    """Look up a carrier by DOT number."""
+    """Look up a carrier by DOT number.
+
+    \b
+    Examples:
+      loopsh carriers get 2247505
+      loopsh carriers 2247505
+      loopsh carriers get 2247505 --fields legal_name,phone,total_trucks
+      loopsh --json carriers get 2247505 | jq '.legal_name'
+    """
     field_list = [f.strip() for f in fields.split(",")] if fields else None
+
+    if state.codegen:
+        kwargs = {"fields": field_list} if field_list else {}
+        fn = print_python if state.codegen == "python" else print_typescript
+        fn("carriers.get", [dot_number], kwargs)
+        return
+
     result = state.client.carriers.get(dot_number, fields=field_list)
 
     if state.output_json:
@@ -42,8 +74,21 @@ def get(state, dot_number, fields):
 @click.option("--fields", default=None, help="Comma-separated field projection.")
 @pass_state
 def mc(state, mc_number, fields):
-    """Look up a carrier by MC/MX docket number."""
+    """Look up a carrier by MC/MX docket number.
+
+    \b
+    Examples:
+      loopsh carriers mc 624748
+      loopsh --json carriers mc 624748
+    """
     field_list = [f.strip() for f in fields.split(",")] if fields else None
+
+    if state.codegen:
+        kwargs = {"fields": field_list} if field_list else {}
+        fn = print_python if state.codegen == "python" else print_typescript
+        fn("carriers.get_by_mc", [mc_number], kwargs)
+        return
+
     result = state.client.carriers.get_by_mc(mc_number, fields=field_list)
 
     if state.output_json:
@@ -69,7 +114,25 @@ def mc(state, mc_number, fields):
 @click.option("--limit", default=10, type=int, help="Results per page.")
 @pass_state
 def search(state, company_name, domain, state_filter, city, page, limit):
-    """Fuzzy search for carriers by company name."""
+    """Fuzzy search for carriers by company name.
+
+    \b
+    Examples:
+      loopsh carriers search "Werner Enterprises"
+      loopsh carriers search "JB Hunt" --state AR --limit 5
+      loopsh --json carriers search "Swift" | jq '.results[].legal_name'
+
+    \b
+    Agent workflow — search then get details:
+      DOT=$(loopsh --json carriers search "Swift" | jq -r '.results[0].dot_number')
+      loopsh carriers get "$DOT"
+    """
+    if state.codegen:
+        kwargs = {"domain": domain, "state": state_filter, "city": city, "page": page, "limit": limit}
+        fn = print_python if state.codegen == "python" else print_typescript
+        fn("carriers.search", [company_name], kwargs)
+        return
+
     result = state.client.carriers.search(
         company_name, domain=domain, state=state_filter, city=city,
         page=page, limit=limit,
@@ -92,7 +155,18 @@ def search(state, company_name, domain, state_filter, city, page, limit):
 @click.option("--offset", default=0, type=int, help="Offset.")
 @pass_state
 def authority(state, dot_number, limit, offset):
-    """Authority history for a carrier."""
+    """Authority history for a carrier.
+
+    \b
+    Examples:
+      loopsh carriers authority 2247505
+      loopsh --json carriers authority 2247505
+    """
+    if state.codegen:
+        fn = print_python if state.codegen == "python" else print_typescript
+        fn("carriers.authority", [dot_number], {"limit": limit, "offset": offset})
+        return
+
     result = state.client.carriers.authority(dot_number, limit=limit, offset=offset)
 
     if state.output_json:
@@ -114,7 +188,18 @@ def authority(state, dot_number, limit, offset):
 @click.option("--limit", default=25, type=int, help="Results per page.")
 @pass_state
 def news(state, dot_number, start_date, end_date, page, limit):
-    """News articles and press mentions for a carrier."""
+    """News articles and press mentions for a carrier.
+
+    \b
+    Examples:
+      loopsh carriers news 2247505
+      loopsh carriers news 2247505 --start-date 2025-01-01
+    """
+    if state.codegen:
+        fn = print_python if state.codegen == "python" else print_typescript
+        fn("carriers.news", [dot_number], {"start_date": start_date, "end_date": end_date, "page": page, "limit": limit})
+        return
+
     result = state.client.carriers.news(
         dot_number, start_date=start_date, end_date=end_date,
         page=page, limit=limit,
