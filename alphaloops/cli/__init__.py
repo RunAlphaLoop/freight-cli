@@ -1,6 +1,6 @@
 """AlphaLoops Freight CLI — command-line interface for FMCSA carrier data."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 import sys
 
@@ -16,7 +16,7 @@ console = Console(stderr=True)
 @click.group(invoke_without_command=True)
 @click.option("--json", "output_json", is_flag=True, help="Output raw JSON (for scripts and agents).")
 @click.option("--api-key", envvar="ALPHALOOPS_API_KEY", default=None, help="API key (default: env/config file).")
-@click.version_option(__version__, prog_name="al")
+@click.version_option(__version__, prog_name="loopsh")
 @click.pass_context
 def main(ctx, output_json, api_key):
     """AlphaLoops Freight CLI — FMCSA carrier data at your fingertips."""

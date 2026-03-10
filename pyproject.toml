@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "alphaloops-freight-cli"
-version = "0.1.0"
+version = "0.2.0"
 description = "AlphaLoops Freight CLI — command-line interface for FMCSA carrier data"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-al = "alphaloops.cli:cli"
+loopsh = "alphaloops.cli:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["alphaloops"]

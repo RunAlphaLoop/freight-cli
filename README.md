@@ -18,13 +18,13 @@ pip install alphaloops-freight-cli
 
 ```bash
 # Option 1: Save your key
-al login ak_your_key_here
+loopsh login ak_your_key_here
 
 # Option 2: Environment variable
 export ALPHALOOPS_API_KEY=ak_your_key_here
 
 # Option 3: Pass it directly
-al --api-key ak_... carriers get 2247505
+loopsh --api-key ak_... carriers get 2247505
 ```
 
 Get your API key at [runalphaloops.com](https://runalphaloops.com/).
@@ -35,56 +35,56 @@ Get your API key at [runalphaloops.com](https://runalphaloops.com/).
 
 ```bash
 # Look up by DOT number
-al carriers get 2247505
+loopsh carriers get 2247505
 
 # Look up by MC number
-al carriers mc 624748
+loopsh carriers mc 624748
 
 # Field projection
-al carriers get 2247505 --fields legal_name,total_trucks,total_drivers
+loopsh carriers get 2247505 --fields legal_name,total_trucks,total_drivers
 
 # Fuzzy search
-al carriers search "Swift Transportation"
-al carriers search "JB Hunt" --state AR --limit 5
+loopsh carriers search "Swift Transportation"
+loopsh carriers search "JB Hunt" --state AR --limit 5
 
 # Authority history
-al carriers authority 2247505
+loopsh carriers authority 2247505
 
 # News
-al carriers news 2247505 --start-date 2025-01-01
+loopsh carriers news 2247505 --start-date 2025-01-01
 ```
 
 ### Fleet Data
 
 ```bash
-al fleet trucks 2247505
-al fleet trucks 2247505 --limit 200
-al fleet trailers 2247505
+loopsh fleet trucks 2247505
+loopsh fleet trucks 2247505 --limit 200
+loopsh fleet trailers 2247505
 ```
 
 ### Inspections
 
 ```bash
-al inspections list 2247505
-al inspections violations INS-12345
+loopsh inspections list 2247505
+loopsh inspections violations INS-12345
 ```
 
 ### Crashes
 
 ```bash
-al crashes list 2247505
-al crashes list 2247505 --severity FATAL --start-date 2024-01-01
+loopsh crashes list 2247505
+loopsh crashes list 2247505 --severity FATAL --start-date 2024-01-01
 ```
 
 ### Contacts
 
 ```bash
 # Search for people
-al contacts search --dot 2247505
-al contacts search --company "Swift" --levels c_suite,vp
+loopsh contacts search --dot 2247505
+loopsh contacts search --company "Swift" --levels c_suite,vp
 
 # Enrich a contact (1 credit)
-al contacts enrich contact_id_here
+loopsh contacts enrich contact_id_here
 ```
 
 ## JSON Output
@@ -92,9 +92,9 @@ al contacts enrich contact_id_here
 Every command supports `--json` for machine-readable output:
 
 ```bash
-al --json carriers get 2247505
-al --json carriers search "Swift" | jq '.results[].legal_name'
-al --json fleet trucks 2247505 | jq '.results | length'
+loopsh --json carriers get 2247505
+loopsh --json carriers search "Swift" | jq '.results[].legal_name'
+loopsh --json fleet trucks 2247505 | jq '.results | length'
 ```
 
 This makes the CLI agent-friendly — pipe to `jq`, feed into scripts, or use from AI agents.
@@ -103,39 +103,39 @@ This makes the CLI agent-friendly — pipe to `jq`, feed into scripts, or use fr
 
 ```bash
 # Find a carrier and get their fleet size
-al carriers search "Werner Enterprises" --limit 1
-al carriers get 2247505 --fields legal_name,total_trucks,total_drivers
+loopsh carriers search "Werner Enterprises" --limit 1
+loopsh carriers get 2247505 --fields legal_name,total_trucks,total_drivers
 
 # Get all fatal crashes for a carrier
-al --json crashes list 2247505 --severity FATAL | jq '.results[]'
+loopsh --json crashes list 2247505 --severity FATAL | jq '.results[]'
 
 # Find C-suite contacts and enrich them
-al --json contacts search --dot 2247505 --levels c_suite | jq '.results[].name'
-al contacts enrich abc123
+loopsh --json contacts search --dot 2247505 --levels c_suite | jq '.results[].name'
+loopsh contacts enrich abc123
 
 # Pipeline: search → get details → get fleet
-DOT=$(al --json carriers search "Swift" | jq -r '.results[0].dot_number')
-al carriers get "$DOT"
-al fleet trucks "$DOT"
+DOT=$(loopsh --json carriers search "Swift" | jq -r '.results[0].dot_number')
+loopsh carriers get "$DOT"
+loopsh fleet trucks "$DOT"
 ```
 
 ## All Commands
 
 | Command | Description |
 |---------|-------------|
-| `al login <key>` | Save API key to `~/.alphaloops` |
-| `al carriers get <dot>` | Carrier profile by DOT number |
-| `al carriers mc <mc>` | Carrier profile by MC number |
-| `al carriers search <name>` | Fuzzy search carriers |
-| `al carriers authority <dot>` | Authority history |
-| `al carriers news <dot>` | News and press mentions |
-| `al fleet trucks <dot>` | Registered trucks |
-| `al fleet trailers <dot>` | Registered trailers |
-| `al inspections list <dot>` | Roadside inspections |
-| `al inspections violations <id>` | Violations for an inspection |
-| `al crashes list <dot>` | Crash history |
-| `al contacts search` | Find contacts at a carrier |
-| `al contacts enrich <id>` | Enrich a contact (email, phone) |
+| `loopsh login <key>` | Save API key to `~/.alphaloops` |
+| `loopsh carriers get <dot>` | Carrier profile by DOT number |
+| `loopsh carriers mc <mc>` | Carrier profile by MC number |
+| `loopsh carriers search <name>` | Fuzzy search carriers |
+| `loopsh carriers authority <dot>` | Authority history |
+| `loopsh carriers news <dot>` | News and press mentions |
+| `loopsh fleet trucks <dot>` | Registered trucks |
+| `loopsh fleet trailers <dot>` | Registered trailers |
+| `loopsh inspections list <dot>` | Roadside inspections |
+| `loopsh inspections violations <id>` | Violations for an inspection |
+| `loopsh crashes list <dot>` | Crash history |
+| `loopsh contacts search` | Find contacts at a carrier |
+| `loopsh contacts enrich <id>` | Enrich a contact (email, phone) |
 
 ## API Documentation
 
