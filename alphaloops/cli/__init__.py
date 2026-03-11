@@ -1,11 +1,13 @@
 """AlphaLoops Freight CLI — command-line interface for FMCSA carrier data."""
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
+import importlib.resources
 import json
 import os
 import stat
 import sys
+from pathlib import Path
 
 import click
 from rich.console import Console
@@ -22,9 +24,10 @@ console = Console(stderr=True)
 @click.option("--python", "output_python", is_flag=True, help="Print Python SDK code instead of running the command.")
 @click.option("--typescript", "output_typescript", is_flag=True, help="Print TypeScript SDK code instead of running the command.")
 @click.option("--api-key", envvar="ALPHALOOPS_API_KEY", default=None, help="API key (default: env/config file).")
+@click.option("--agent-help", "agent_help", is_flag=True, help="Print the full agent usage guide (AGENTS.md).")
 @click.version_option(__version__, prog_name="loopsh")
 @click.pass_context
-def main(ctx, output_json, output_python, output_typescript, api_key):
+def main(ctx, output_json, output_python, output_typescript, api_key, agent_help):
     """AlphaLoops Freight CLI — FMCSA carrier data at your fingertips.
 
     \b
@@ -47,6 +50,15 @@ def main(ctx, output_json, output_python, output_typescript, api_key):
       loopsh --python carriers get 2247505
       loopsh --typescript contacts search --dot 2247505
     """
+    if agent_help:
+        agents_md = Path(__file__).resolve().parent.parent / "AGENTS.md"
+        if agents_md.is_file():
+            click.echo(agents_md.read_text())
+        else:
+            click.echo("AGENTS.md not found.", err=True)
+        ctx.exit(0)
+        return
+
     ctx.ensure_object(dict)
     ctx.obj = ClientState(
         api_key=api_key,
@@ -69,9 +81,39 @@ main.add_command(contacts_cmd.contacts)
 @main.command()
 @click.argument("api_key", required=False)
 def login(api_key):
-    """Save your API key to ~/.alphaloops."""
+    """Save your API key to ~/.alphaloops.
+
+    \b
+    The .alphaloops config file is JSON:
+      {"api_key": "ak_..."}
+
+    \b
+    Config resolution (first match wins):
+      1. --api-key flag or ALPHALOOPS_API_KEY env var
+      2. .alphaloops in current directory (walks up to home)
+      3. ~/.alphaloops
+
+    \b
+    For per-project keys, put .alphaloops in your project root.
+    Add .alphaloops to your .gitignore — never commit API keys.
+    """
     if not api_key:
-        api_key = click.prompt("API key")
+        if not sys.stdin.isatty():
+            click.echo("Error: No API key provided.", err=True)
+            click.echo("", err=True)
+            click.echo("Usage: loopsh login <API_KEY>", err=True)
+            click.echo("   or: echo '{\"api_key\": \"ak_...\"}' > ~/.alphaloops", err=True)
+            click.echo("", err=True)
+            click.echo("Get a key at: https://alphafreight.runalphaloops.com → Settings → API", err=True)
+            raise SystemExit(1)
+
+        console.print()
+        console.print("[bold]AlphaLoops Freight CLI[/bold]")
+        console.print()
+        console.print("Don't have a key? Get one at:")
+        console.print("[cyan]https://alphafreight.runalphaloops.com[/cyan] → Settings → API")
+        console.print()
+        api_key = click.prompt("API key", hide_input=True)
 
     api_key = api_key.strip()
     if not api_key:

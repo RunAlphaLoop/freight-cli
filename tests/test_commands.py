@@ -24,6 +24,12 @@ class TestRootCommands:
         assert result.exit_code == 0
         assert "Usage" in result.output or "carriers" in result.output
 
+    def test_agent_help(self, runner, mock_client):
+        result = runner.invoke(main, ["--agent-help"])
+        assert result.exit_code == 0
+        assert "Agent Usage Guide" in result.output
+        assert "loopsh" in result.output
+
 
 class TestLogin:
     def test_login_with_arg(self, runner, mock_client, tmp_path, monkeypatch):
@@ -35,13 +41,15 @@ class TestLogin:
         data = json.loads(config_path.read_text())
         assert data["api_key"] == "ak_test_key_12345"
 
-    def test_login_prompts_when_no_arg(self, runner, mock_client, tmp_path, monkeypatch):
+    def test_login_non_interactive_shows_error(self, runner, mock_client, tmp_path, monkeypatch):
+        """When no arg is given and stdin is not a TTY, show helpful error."""
         config_path = tmp_path / ".alphaloops"
         monkeypatch.setattr("os.path.expanduser", lambda p: str(config_path) if p == "~/.alphaloops" else p)
-        result = runner.invoke(main, ["login"], input="ak_prompted_key\n")
-        assert result.exit_code == 0
-        data = json.loads(config_path.read_text())
-        assert data["api_key"] == "ak_prompted_key"
+        result = runner.invoke(main, ["login"])
+        assert result.exit_code == 1
+        # Error message should include usage hints (written to stderr, captured in output by CliRunner)
+        combined = result.output + (result.stderr if hasattr(result, "stderr") else "")
+        assert "loopsh login" in combined or "API" in combined
 
 
 class TestCarriers:
